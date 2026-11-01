@@ -29,19 +29,17 @@ function Stars({
 export default function CommunityFeedback({
   rows,
   status,
-  configured,
+  average,
+  count,
   onRetry,
 }: {
   rows: FeedbackRow[];
   status: "loading" | "ready" | "error";
-  configured: boolean;
+  /** Exact average over the whole table, computed by the API. */
+  average: number | null;
+  count: number;
   onRetry: () => void;
 }) {
-  const count = rows.length;
-  const average =
-    count > 0
-      ? rows.reduce((sum, row) => sum + row.review_rating, 0) / count
-      : null;
 
   return (
     <div className="mt-16 border-t border-ink/15 pt-16">
@@ -80,17 +78,10 @@ export default function CommunityFeedback({
         </div>
       )}
 
-      {status === "ready" && configured && count === 0 && (
+      {status === "ready" && count === 0 && (
         <p className="mx-auto mt-8 max-w-[30rem] text-center text-[1.0625rem] leading-relaxed text-ink/80">
           No responses yet — you could be the very first. It takes two minutes,
           right above.
-        </p>
-      )}
-
-      {status === "ready" && !configured && (
-        <p className="mx-auto mt-8 max-w-[30rem] text-center text-[1.0625rem] leading-relaxed text-ink/80">
-          Feedback storage isn't hooked up to Supabase yet, so there's nothing
-          to show here.
         </p>
       )}
 

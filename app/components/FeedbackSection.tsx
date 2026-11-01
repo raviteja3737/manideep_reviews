@@ -5,7 +5,6 @@ import {
   READ_STATUS_OPTIONS,
   fetchFeedback,
   submitFeedback,
-  supabaseConfigured,
   type FeedbackRow,
   type ReadStatus,
 } from "@/app/lib/feedback";
@@ -41,17 +40,16 @@ export default function FeedbackSection() {
   // ── community list state ───────────────────────────────────
   const [rows, setRows] = useState<FeedbackRow[]>([]);
   const [listStatus, setListStatus] = useState<ListStatus>("loading");
+  const [average, setAverage] = useState<number | null>(null);
+  const [count, setCount] = useState(0);
 
   const loadRows = useCallback(() => {
-    if (!supabaseConfigured) {
-      setRows([]);
-      setListStatus("ready");
-      return;
-    }
     setListStatus("loading");
     fetchFeedback()
       .then((data) => {
-        setRows(data);
+        setRows(data.rows);
+        setAverage(data.average);
+        setCount(data.count);
         setListStatus("ready");
       })
       .catch(() => {
@@ -132,10 +130,12 @@ export default function FeedbackSection() {
       });
       setSubmitState("success");
       loadRows();
-    } catch {
+    } catch (error) {
       setSubmitState("error");
       setSubmitError(
-        "That didn't go through — give it another try in a moment."
+        error instanceof Error && error.message
+          ? error.message
+          : "That didn't go through — give it another try in a moment."
       );
     }
   }
@@ -152,24 +152,6 @@ export default function FeedbackSection() {
         Since this is my first book review, I'd genuinely love some feedback.
         Don't hold back!
       </p>
-
-      {!supabaseConfigured && (
-        <p className="mt-10 border border-dashed border-ink/30 px-5 py-4 text-sm leading-relaxed text-ink/85">
-          This form is ready but not yet wired to Supabase. Put your project's{" "}
-          <code className="rounded bg-ink/5 px-1 font-mono text-[0.85em]">
-            NEXT_PUBLIC_SUPABASE_URL
-          </code>{" "}
-          and{" "}
-          <code className="rounded bg-ink/5 px-1 font-mono text-[0.85em]">
-            NEXT_PUBLIC_SUPABASE_ANON_KEY
-          </code>{" "}
-          into{" "}
-          <code className="rounded bg-ink/5 px-1 font-mono text-[0.85em]">
-            .env.local
-          </code>{" "}
-          (see the README) and reload.
-        </p>
-      )}
 
       {submitState === "success" ? (
         <div
@@ -349,7 +331,8 @@ export default function FeedbackSection() {
       <CommunityFeedback
         rows={rows}
         status={listStatus}
-        configured={supabaseConfigured}
+        average={average}
+        count={count}
         onRetry={loadRows}
       />
     </>

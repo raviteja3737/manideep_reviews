@@ -2,68 +2,77 @@
 
 A one-page, editorial reading journal for Manideep Polepalli's first-ever book
 review (book: **Zidd**). The review is the hero; readers can leave honest
-feedback at the bottom, stored in Supabase, with a live community list and a
-real average rating. No fake data, anywhere.
+feedback at the bottom, with a live community list and a real average rating.
+No fake data, anywhere.
 
 Built with Next.js (App Router, static export), Tailwind CSS 4 and TypeScript.
-Deployed on Cloudflare Workers (static assets).
+Everything runs on **Cloudflare**: the page is served as Workers static assets,
+and feedback is stored in **Cloudflare D1** behind a tiny Worker API at
+`/api/feedback` — no database keys in the browser at all.
 
 ---
 
-## 1. Local development
+## 1. Local development (full stack)
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
+
+# create the local D1 database and apply the schema (one-time per machine)
+npx wrangler d1 execute manideep-reviews --local --file=d1/schema.sql
+
+# build the static page, then run the whole thing (page + API + local D1)
+npm run build
+npx wrangler dev
 ```
 
-The page renders without Supabase keys — you'll see a quiet notice where the
-form is. Add keys to make the form + community list live.
+Open http://localhost:8787. The form and the community list are fully live
+against a local database — nothing leaves your machine.
 
-## 2. Supabase setup (one-time, free)
+(`npm run dev` renders the page too, but `/api/feedback` only exists under
+`wrangler dev`, so use that for testing the form.)
 
-1. Create a project at [supabase.com](https://supabase.com) (free tier is fine).
-2. Open **SQL Editor** in the dashboard, paste the contents of
-   [`supabase/schema.sql`](supabase/schema.sql), and run it. This creates the
-   `feedback` table with validation checks and row-level security (anyone can
-   read + insert; nothing else).
-3. Open **Settings → API** and copy the **Project URL** and the **anon public
-   key** (never the `service_role` key — RLS is what makes the anon key safe).
-4. Create `.env.local` in the project root (or copy `.env.example`):
+## 2. Cloudflare setup (one-time)
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-KEY
+1. Create the database:
+
+   ```bash
+   npx wrangler d1 create manideep-reviews
    ```
 
-Note: `NEXT_PUBLIC_*` variables are read **at build time**. If you build on
-Cloudflare (repo-connected deploys), set these as build environment variables
-in the Cloudflare dashboard too.
+   …or in the dashboard: **Workers & Pages → D1 SQL Database → Create**.
+   Copy its `database_id` into [`wrangler.jsonc`](wrangler.jsonc) (replace the
+   placeholder `00000000-…`).
 
-## 3. Deploying to Cloudflare
+2. Apply the schema to the real database:
 
-You have two options; both serve `./out` (the static build) from Workers.
+   ```bash
+   npx wrangler d1 execute manideep-reviews --remote --file=d1/schema.sql
+   ```
+
+   (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` — see
+   `.env.cloudflare`; or paste `d1/schema.sql` into the D1 dashboard console.)
+
+## 3. Deploying
 
 ### Option A — connect this GitHub repo (recommended, auto-deploys on push)
 
-1. In the Cloudflare dashboard → **Workers & Pages → Create → Import an
-   existing Git repository**.
+1. Cloudflare dashboard → **Workers & Pages → Create → Import an existing
+   Git repository**.
 2. Connect GitHub and pick `raviteja3737/manideep_reviews`.
 3. Build settings:
    - Build command: `npm run build`
    - Deploy command: `npx wrangler deploy`
    - Root directory: `/`
-4. **Settings → Variables** (build): add the two `NEXT_PUBLIC_SUPABASE_*`
-   variables.
-5. Deploy. Every push to the repo now deploys automatically.
+4. Deploy. Every push to the repo now deploys automatically.
+
+No environment variables are needed — there are no keys to configure.
 
 ### Option B — deploy straight from your machine
 
 ```powershell
 # credentials live in .env.cloudflare (gitignored, never committed)
-Get-Content .env.cloudflare | ForEach-Object { $_ } # or use autoenv/direnv
-$env:CLOUDFLARE_API_TOKEN = "<your token>"
-$env:CLOUDFLARE_ACCOUNT_ID = "a2f35894537252e4a1a0adcb6de8a8d2"
+$env:CLOUDFLARE_API_TOKEN = (Get-Content .env.cloudflare | Select-String '^CLOUDFLARE_API_TOKEN=').ToString().Split('=')[1]
+$env:CLOUDFLARE_ACCOUNT_ID = (Get-Content .env.cloudflare | Select-String '^CLOUDFLARE_ACCOUNT_ID=').ToString().Split('=')[1]
 
 npm run build
 npx wrangler deploy
@@ -71,17 +80,20 @@ npx wrangler deploy
 
 ## 4. Notes & security
 
-- The Supabase **anon key is public by design** — the table is protected by
-  RLS (read + insert only, with column checks). Never put the `service_role`
-  key in frontend code or env files.
-- `wrangler.jsonc` is preconfigured: `npm run build` then `npx wrangler
-  deploy` ships `./out` as a static-asset Worker.
+- The browser never sees a database credential. The form posts to the
+  same-origin `/api/feedback` Worker, which validates every field (mirroring
+  the D1 table's own `CHECK` constraints) before inserting.
+- Get- and set-side checks agree: server validation, SQL checks, and the
+  form's own validation all enforce the same limits (stars 1–5, writing 1–10,
+  ≤ 2000 chars of feedback, ≤ 80 chars of name, one of 6 reactions).
 - The R2 credentials in your Cloudflare account are **not needed** for this
-  site — feedback lives in Supabase.
+  site — feedback lives in D1.
 - The Cloudflare token is an **account-scoped API token** (`cfat_…`): it
-  verifies at `/accounts/{account_id}/tokens/verify` (this project's token was
-  verified **active** on 2026-11-01), and it must be used together with
-  `CLOUDFLARE_ACCOUNT_ID`. It was shared over chat; rotate it when convenient.
+  verifies at `/accounts/{account_id}/tokens/verify` (verified **active** on
+  2026-11-01) and must be used together with `CLOUDFLARE_ACCOUNT_ID`. It was
+  shared over chat; rotate it when convenient.
+- If spam ever shows up, Cloudflare **Turnstile** can be added to the form
+  with a few lines — not wired up for now.
 
 ## 5. Repo layout
 
@@ -97,8 +109,9 @@ app/
     WritingScale.tsx    1–10 slider with live value
     CommunityFeedback.tsx  community list + real average + count
     StarIcon.tsx        the one drawn icon on the site
-  lib/feedback.ts       Supabase client, types, constants, validation consts
-supabase/schema.sql     the database, one SQL script
+  lib/feedback.ts       same-origin API client, types, constants
+worker/index.js         /api/feedback: GET list+stats, POST validated insert
+d1/schema.sql           the database, one SQL script
 docs/verbatim-copy.md   every string of copy, verbatim — the drift guard
-wrangler.jsonc          Cloudflare Workers static-asset config
+wrangler.jsonc          Worker config: static assets + D1 binding
 ```
