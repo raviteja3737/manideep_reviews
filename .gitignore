@@ -11,4 +11,5 @@ out/
 
 # agent/design working artifacts
 .impeccable/
+.serena/
 PRODUCT.md

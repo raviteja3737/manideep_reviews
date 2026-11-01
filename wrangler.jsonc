@@ -18,9 +18,11 @@
 //   npx wrangler dev
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "manideep-reviews",
+  "name": "first-review",
   "main": "worker/index.js",
   "compatibility_date": "2026-10-01",
+  // Ensure the preview URL <name>.<subdomain>.workers.dev is enabled.
+  "workers_dev": true,
   "assets": {
     "directory": "./out",
     "binding": "ASSETS",
@@ -33,8 +35,7 @@
     {
       "binding": "DB",
       "database_name": "manideep-reviews",
-      // TODO: replace with the real id from `npx wrangler d1 create manideep-reviews`
-      "database_id": "00000000-0000-0000-0000-000000000000"
+      "database_id": "c0d0250e-9f87-43df-b6c8-6b06e07d20f0"
     }
   ]
 }
