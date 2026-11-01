@@ -1,0 +1,26 @@
+{
+  "name": "manideep-reviews",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A Reader's First Review — Manideep Polepalli's first-ever book review (Zidd)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "next": "^15.4.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.8.0",
+    "wrangler": "^4.14.0"
+  }
+}

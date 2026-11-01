@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #faf9f6;
+  --color-ink: #252525;
+
+  --font-display: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* The browser's own surfaces carry the design too. */
+::selection {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+.field {
+  color: var(--color-ink);
+  background-color: transparent;
+  border-radius: 0;
+  border-color: color-mix(in oklab, var(--color-ink) 22%, transparent);
+  transition: border-color 180ms ease;
+}
+
+.field::placeholder {
+  color: #6b6b6b; /* ≥4.5:1 on paper */
+}
+
+@media (hover: hover) {
+  .field:hover:not(:focus) {
+    border-color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+  }
+}
+
+.field:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  border-color: var(--color-ink);
+}
+
+/* Keyboard-focus rings for the radio/checkbox labels (stars, chips, pills). */
+label:has(input:focus-visible) {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+
+/* The 1–10 writing slider, drawn from the ink/paper palette. */
+.writing-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.writing-slider::-webkit-slider-runnable-track {
+  height: 1px;
+  background: color-mix(in oklab, var(--color-ink) 25%, transparent);
+}
+
+.writing-slider::-moz-range-track {
+  height: 1px;
+  background: color-mix(in oklab, var(--color-ink) 25%, transparent);
+}
+
+.writing-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -10.5px;
+  border-radius: 9999px;
+  background: var(--color-ink);
+  border: none;
+}
+
+.writing-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--color-ink);
+  border: none;
+}
+
+.writing-slider:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 4px;
+}

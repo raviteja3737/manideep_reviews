@@ -1,0 +1,14 @@
+# deps + build output
+node_modules/
+.next/
+out/
+.wrangler/
+*.tsbuildinfo
+
+# local env & secrets (.env.cloudflare holds Cloudflare deploy creds — never commit)
+.env*
+!.env.example
+
+# agent/design working artifacts
+.impeccable/
+PRODUCT.md
